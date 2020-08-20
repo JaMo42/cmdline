@@ -80,7 +80,7 @@ bool ArgumentParser::validate_option(char short_name, const char *long_name) {
 }
 
 int ArgumentParser::parse_args(int argc, const char **argv, bool exit_on_failure) {
-  auto arg_it = m_arguments.begin();
+  std::size_t argind = 0;
   bool terminate_options = false;
   int i;
 
@@ -114,7 +114,7 @@ int ArgumentParser::parse_args(int argc, const char **argv, bool exit_on_failure
       }
     }
     else {
-      if (!this->parse_argument(argc, argv, i, arg_it)) {
+      if (!this->parse_argument(argc, argv, i, argind)) {
           std::puts("  FAILED");
         print_usage_and_exit();
       }
@@ -334,12 +334,12 @@ bool ArgumentParser::parse_short_option(int argc, const char **argv, int &optind
   return ok;
 }
 
-bool ArgumentParser::parse_argument(int argc, const char **argv, int &optind, ArgumentsIt &arg_it) {
+bool ArgumentParser::parse_argument(int argc, const char **argv, int &optind, std::size_t &argind) {
   std::printf("ArgumentParser::parse_argument(%d, %p(\"%s\"), %d, <it>)\n", argc, argv, argv[optind], optind);
-  if (arg_it == m_arguments.end()) {
+  if (argind >= m_arguments.size()) {
     return true;
   }
-  Argument &arg = *arg_it;
+  Argument &arg = m_arguments[argind];
 
   auto print_arg_error = [&]() {
     if (arg.nargs == 1) {
@@ -353,7 +353,7 @@ bool ArgumentParser::parse_argument(int argc, const char **argv, int &optind, Ar
   };
 
   // Check if there are enough argv elements left
-  if ((optind + arg.nargs) >= static_cast<std::size_t>(argc)) {
+  if ((optind + arg.nargs - 1) >= static_cast<std::size_t>(argc)) {
     if (error_messages) {
       print_arg_error();
     }
@@ -369,9 +369,9 @@ bool ArgumentParser::parse_argument(int argc, const char **argv, int &optind, Ar
     }
   }
   // All good
-  arg.set_value(&argv[optind + 1]);
-  optind += arg.nargs;
-  ++arg_it;
+  arg.set_value(&argv[optind]);
+  optind += arg.nargs - 1;
+  ++argind;
   return true;
 }
 

@@ -33,6 +33,8 @@ SOFTWARE.
 #include <algorithm>
 #include <functional>
 
+#include <iostream>
+
 namespace cmdline {
 
 struct Option {
@@ -105,12 +107,12 @@ public:
    * @brief Adds an argument with one value.
    */
   template<typename T>
-  void add_argument(T &value, const char *name, const char *help, bool required = true);
+  void add_argument(T &value, const char *help, const char *name, bool required = true);
   /**
    * @brief Adds an argument with mutiple values
    */
   template<typename T, std::size_t N>
-  void add_argument(std::array<T, N> &value, const char *name, const char *help, bool required = true);
+  void add_argument(std::array<T, N> &value, const char *help, const char *name, bool required = true);
 
 
   /**
@@ -124,7 +126,6 @@ public:
   void usage(const char *);
 
 protected:
-  using ArgumentsIt = std::vector<Argument>::iterator;
   static constexpr std::size_t npos = static_cast<std::size_t>(-1);
 
   bool validate_option(char short_name, const char *long_name);
@@ -134,7 +135,7 @@ protected:
 
   bool parse_long_option(int, const char **, int &);
   bool parse_short_option(int, const char **, int &);
-  bool parse_argument(int, const char **, int &, ArgumentsIt &);
+  bool parse_argument(int, const char **, int &, std::size_t &);
 };
 
 ///////////////////////////////////////////////////////////////////////////
@@ -213,7 +214,7 @@ bool ArgumentParser::add_option(std::array<T, N> &value, const char *help, char 
 }
 
 template<typename T>
-void ArgumentParser::add_argument(T &value, const char *name, const char *help, bool required) {
+void ArgumentParser::add_argument(T &value, const char *help, const char *name, bool required) {
   m_arguments.emplace_back(
     name,
     help,
@@ -229,7 +230,7 @@ void ArgumentParser::add_argument(T &value, const char *name, const char *help, 
 }
 
 template<typename T, std::size_t N>
-void ArgumentParser::add_argument(std::array<T, N> &value, const char *name, const char *help, bool required) {
+void ArgumentParser::add_argument(std::array<T, N> &value, const char *help, const char *name, bool required) {
   return m_arguments.emplace_back(
     name,
     help,

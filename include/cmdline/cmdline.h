@@ -65,6 +65,7 @@ protected:
   std::vector<Argument> m_arguments;
   bool m_show_help { false }; //< output for the help option
   std::stringstream m_ss; //< used for converting arguments
+  std::vector<const char *> *m_unhandled { nullptr };
 
 public:
   /**
@@ -113,12 +114,17 @@ public:
    */
   template<typename T, std::size_t N>
   void add_argument(std::array<T, N> &value, const char *help, const char *name, bool required = true);
+  /**
+   * @brief Adds an argument that recieves all unhandled positional arguments.
+   * This can only be called once, subsequent calls have no effect.
+   */
+  void add_argument(std::vector<const char *> &value);
 
 
   /**
    * @brief Parses arguments.
    */
-  int parse_args(int argc, const char **argv, bool exit_on_failure = true);
+  void parse_args(int argc, const char **argv, bool exit_on_failure = true);
 
   /**
    * @brief Prints the usage text.
@@ -231,7 +237,7 @@ void ArgumentParser::add_argument(T &value, const char *help, const char *name, 
 
 template<typename T, std::size_t N>
 void ArgumentParser::add_argument(std::array<T, N> &value, const char *help, const char *name, bool required) {
-  return m_arguments.emplace_back(
+  m_arguments.emplace_back(
     name,
     help,
     required,

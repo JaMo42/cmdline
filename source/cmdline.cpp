@@ -61,6 +61,11 @@ bool ArgumentParser::add_option(bool &value, const char *help, char short_name, 
   return true;
 }
 
+void ArgumentParser::add_argument(std::vector<const char *> &value) {
+  if (m_unhandled == nullptr) {
+    m_unhandled = &value;
+  }
+}
 
 bool ArgumentParser::validate_option(char short_name, const char *long_name) {
   bool cs = short_name != 0;
@@ -79,7 +84,7 @@ bool ArgumentParser::validate_option(char short_name, const char *long_name) {
   return true;
 }
 
-int ArgumentParser::parse_args(int argc, const char **argv, bool exit_on_failure) {
+void ArgumentParser::parse_args(int argc, const char **argv, bool exit_on_failure) {
   std::size_t argind = 0;
   bool terminate_options = false;
   int i;
@@ -102,26 +107,21 @@ int ArgumentParser::parse_args(int argc, const char **argv, bool exit_on_failure
       if (argv[i][1] == '-'
           or (abbreviations and (argv[i][2] or this->option_index(argv[i][1]) == npos))) {
         if (!this->parse_long_option(argc, argv, i)) {
-          std::puts("  FAILED");
           print_usage_and_exit();
         }
       }
       else {
         if (!this->parse_short_option(argc, argv, i)) {
-          std::puts("  FAILED");
           print_usage_and_exit();
         }
       }
     }
     else {
       if (!this->parse_argument(argc, argv, i, argind)) {
-          std::puts("  FAILED");
         print_usage_and_exit();
       }
     }
   }
-
-  return i;
 }
 
 std::size_t ArgumentParser::option_index(char short_name) {
@@ -143,7 +143,6 @@ std::size_t ArgumentParser::option_index(const std::string_view long_name) {
 }
 
 bool ArgumentParser::parse_long_option(int argc, const char **argv, int &optind) {
-  std::printf("ArgumentParser::parse_long_option(%d, %p(\"%s\"), %d)\n", argc, argv, argv[optind], optind);
   const std::string_view tok(argv[optind]);
   const std::size_t eq_pos = tok.find('=');
   const int off = 1 + static_cast<int>(argv[optind][1] == '-');
@@ -251,7 +250,6 @@ bool ArgumentParser::parse_long_option(int argc, const char **argv, int &optind)
 }
 
 bool ArgumentParser::parse_short_option(int argc, const char **argv, int &optind) {
-  std::printf("ArgumentParser::parse_short_option(%d, %p(\"%s\"), %d)\n", argc, argv, argv[optind], optind);
   bool ok = true;
   std::size_t index = this->option_index(argv[optind][1]);
 
@@ -335,9 +333,15 @@ bool ArgumentParser::parse_short_option(int argc, const char **argv, int &optind
 }
 
 bool ArgumentParser::parse_argument(int argc, const char **argv, int &optind, std::size_t &argind) {
-  std::printf("ArgumentParser::parse_argument(%d, %p(\"%s\"), %d, <it>)\n", argc, argv, argv[optind], optind);
   if (argind >= m_arguments.size()) {
-    return true;
+    if (m_unhandled != nullptr) {
+      m_unhandled->push_back(argv[optind]);
+      return true;
+    } else {
+      std::fprintf(stderr, "%s: unrecognized argument: `%s'\n",
+        argv[0], argv[optind]);
+      return false;
+    }
   }
   Argument &arg = m_arguments[argind];
 

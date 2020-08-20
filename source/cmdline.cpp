@@ -97,7 +97,6 @@ void ArgumentParser::parse_args(int argc, const char **argv, bool exit_on_failur
   };
 
   for (i = 1; i < argc; ++i) {
-    std::printf("ArgumentParser::parse_args: %d: \"%s\"\n", i, argv[i]);
     if (!terminate_options and argv[i][0] == '-') {
       /*if (!strcmp(argv[i], "--")) {
         std::puts("ArgumentParser::parse_args: `--': stopping option parsing");
@@ -343,6 +342,7 @@ bool ArgumentParser::parse_argument(int argc, const char **argv, int &optind, st
       return false;
     }
   }
+
   Argument &arg = m_arguments[argind];
 
   auto print_arg_error = [&]() {
@@ -365,7 +365,7 @@ bool ArgumentParser::parse_argument(int argc, const char **argv, int &optind, st
   }
   // Check if there are enough arguments
   for (std::size_t n = 0; n < arg.nargs; ++n) {
-    if (argv[optind + n + 1][0] == '-') {
+    if (argv[optind + n][0] == '-') {
       if (error_messages) {
         print_arg_error();
       }

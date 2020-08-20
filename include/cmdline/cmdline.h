@@ -124,7 +124,7 @@ public:
   /**
    * @brief Parses arguments.
    */
-  void parse_args(int argc, const char **argv, bool exit_on_failure = true);
+  bool parse_args(int argc, const char **argv, bool exit_on_failure = true);
 
   /**
    * @brief Prints the usage text.

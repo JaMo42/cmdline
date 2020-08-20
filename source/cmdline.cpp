@@ -84,12 +84,14 @@ bool ArgumentParser::validate_option(char short_name, const char *long_name) {
   return true;
 }
 
-void ArgumentParser::parse_args(int argc, const char **argv, bool exit_on_failure) {
+bool ArgumentParser::parse_args(int argc, const char **argv, bool exit_on_failure) {
   std::size_t argind = 0;
   bool terminate_options = false;
   int i;
+  bool ok = true;
 
   auto print_usage_and_exit = [&]() {
+    ok = false;
     this->usage(argv[0]);
     if (exit_on_failure) {
       std::exit(EXIT_FAILURE);
@@ -120,6 +122,7 @@ void ArgumentParser::parse_args(int argc, const char **argv, bool exit_on_failur
       }
     }
   }
+  return ok;
 }
 
 std::size_t ArgumentParser::option_index(char short_name) {

@@ -227,12 +227,19 @@ bool ArgumentParser::parse_long_option(int argc, const char **argv, int &optind)
     else {
       if (opt.nargs > 1) {
         if (error_messages) {
-          std::fprintf(stderr, "%s: option `--%s' requires %zu arguments\n",
-            argv[0], argv[optind], opt.nargs);
+          std::fprintf(stderr, "%s: option `--%.*s' requires %zu arguments\n",
+            argv[0], static_cast<int>(name.length()), name.data(), opt.nargs);
         }
         return false;
       }
       const char *arg = argv[optind] + eq_pos + 1;
+      if (*arg == '\0') {
+        if (error_messages) {
+          std::fprintf(stderr, "%s: option `--%.*s' requires an argument\n",
+            argv[0], static_cast<int>(name.length()), name.data());
+        }
+        return false;
+      }
       ok = opt.set_value(&arg);
     }
   }

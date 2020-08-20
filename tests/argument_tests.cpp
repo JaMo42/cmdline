@@ -75,3 +75,68 @@ TEST(ArgumentTests, ParseArgument_Multiple) {
   EXPECT_EQ(ind, 6);
   EXPECT_EQ(argind, 2);
 }
+
+TEST(ArgumentTests, Unhandled) {
+  ParserWrapper p;
+  int arg1, arg2, arg3;
+  std::vector<const char *> unhandled;
+
+  p.add_argument(arg1, "", "");
+  p.add_argument(arg2, "", "");
+  p.add_argument(arg3, "", "");
+
+  {
+    const char *argv[] = {"program_name", "1", "2", "3", "4"};
+    const int argc = size(argv);
+    int ind = 1;
+    std::size_t argind = 0;
+
+    EXPECT_TRUE(p.parse_argument_(argc, argv, ind, argind));
+    EXPECT_EQ(argind, 1);
+
+    ++ind;
+    EXPECT_TRUE(p.parse_argument_(argc, argv, ind, argind));
+    EXPECT_EQ(argind, 2);
+
+    ++ind;
+    EXPECT_TRUE(p.parse_argument_(argc, argv, ind, argind));
+    EXPECT_EQ(argind, 3);
+
+    ++ind;
+    EXPECT_FALSE(p.parse_argument_(argc, argv, ind, argind));
+    EXPECT_EQ(argind, 3);
+  }
+
+  p.add_argument(unhandled);
+
+  {
+
+    const char *argv[] = {"program_name", "1", "2", "3", "4", "5"};
+    const int argc = size(argv);
+    int ind = 1;
+    std::size_t argind = 0;
+
+    EXPECT_TRUE(p.parse_argument_(argc, argv, ind, argind));
+    EXPECT_EQ(arg1, 1);
+    EXPECT_EQ(argind, 1);
+
+    ind = 2;
+    EXPECT_TRUE(p.parse_argument_(argc, argv, ind, argind));
+    EXPECT_EQ(arg2, 2);
+    EXPECT_EQ(argind, 2);
+
+    ind = 3;
+    EXPECT_TRUE(p.parse_argument_(argc, argv, ind, argind));
+    EXPECT_EQ(arg3, 3);
+    EXPECT_EQ(argind, 3);
+
+    ind = 4;
+    EXPECT_TRUE(p.parse_argument_(argc, argv, ind, argind));
+    ind = 5;
+    EXPECT_TRUE(p.parse_argument_(argc, argv, ind, argind));
+    ASSERT_EQ(unhandled.size(), 2);
+    EXPECT_EQ(unhandled[0], argv[4]);
+    EXPECT_EQ(unhandled[1], argv[5]);
+  }
+
+}

@@ -76,8 +76,8 @@ public:
   /**
    * Whether to allow abbreviations.
    *
-   * If this is set to true, the argument `-fo' could match the option "foobar".
-   * If this is set to true, short option can not be grouped anymore.
+   * If this is set to true, the argument `--fo' could match the option "foobar".
+   * If this is set to true, short options can not be grouped anymore.
    */
   bool abbreviations = false;
 

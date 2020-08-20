@@ -98,13 +98,12 @@ void ArgumentParser::parse_args(int argc, const char **argv, bool exit_on_failur
 
   for (i = 1; i < argc; ++i) {
     if (!terminate_options and argv[i][0] == '-') {
-      /*if (!strcmp(argv[i], "--")) {
-        std::puts("ArgumentParser::parse_args: `--': stopping option parsing");
-        terminate_options = true;
-        continue;
-      }*/
       if (argv[i][1] == '-'
           or (abbreviations and (argv[i][2] or this->option_index(argv[i][1]) == npos))) {
+        if (!strcmp(argv[i], "--")) {
+          terminate_options = true;
+          continue;
+        }
         if (!this->parse_long_option(argc, argv, i)) {
           print_usage_and_exit();
         }
@@ -174,7 +173,8 @@ bool ArgumentParser::parse_long_option(int argc, const char **argv, int &optind)
     }
     if (ambiguous) {
       if (error_messages) {
-        std::fprintf(stderr, "%s: option `%s' is ambiguous\n", argv[0], argv[optind]);
+        std::fprintf(stderr, "%s: option `%s' is ambiguous\n",
+          argv[0], argv[optind]);
       }
       return false;
     }
@@ -182,7 +182,8 @@ bool ArgumentParser::parse_long_option(int argc, const char **argv, int &optind)
 
   if (index_found == npos) {
     if (error_messages) {
-      std::fprintf(stderr, "%s: unrecognized option `--%.*s'\n", argv[0], (int)name.length(), name.data());
+      std::fprintf(stderr, "%s: unrecognized option `--%.*s'\n",
+        argv[0], static_cast<int>(name.length()), name.data());
     }
     return false;
   }
@@ -254,7 +255,8 @@ bool ArgumentParser::parse_short_option(int argc, const char **argv, int &optind
 
   if (index == npos) {
     if (error_messages) {
-      std::fprintf(stderr, "%s: invalid option -- %c\n", argv[0], argv[optind][1]);
+      std::fprintf(stderr, "%s: invalid option -- %c\n",
+        argv[0], argv[optind][1]);
     }
     return false;
   }
@@ -313,14 +315,16 @@ bool ArgumentParser::parse_short_option(int argc, const char **argv, int &optind
       index = this->option_index(argv[optind][i]);
       if (index == npos) {
         if (error_messages) {
-          std::fprintf(stderr, "%s: invalid option -- %c\n", argv[0], argv[optind][1]);
+          std::fprintf(stderr, "%s: invalid option -- %c\n",
+            argv[0], argv[optind][1]);
         }
         return false;
       }
       if (m_options[index].takes_argument) {
         // Options taking an argument can not be grouped
         if (error_messages) {
-          std::fprintf(stderr, "%s: option requires an argument -- %c\n", argv[0], argv[optind][i]);
+          std::fprintf(stderr, "%s: option requires an argument -- %c\n",
+            argv[0], argv[optind][i]);
         }
         return false;
       }

@@ -5,12 +5,8 @@ template<typename T, std::size_t N>
 auto size(T (&)[N]) { return N; }
 
 struct ParserWrapper : public cmdline::ArgumentParser {
-  auto &get_options() {
+  auto & get_options() {
     return m_options;
-  }
-
-  bool validate_option_(char s, const char *l) {
-    return this->validate_option(s, l);
   }
 
   bool parse_short_option_(int argc, const char **argv, int &optind) {
@@ -140,7 +136,6 @@ TEST(OptionTests, ParseShortOption_Any) {
 
 // Long option tests
 
-
 TEST(OptionTests, ParseLongOption_Single) {
   ParserWrapper p;
   bool b = false;
@@ -208,4 +203,29 @@ TEST(OptionTests, ParseLongOption_Multiple) {
   ind = 7;
   EXPECT_FALSE(p.parse_long_option_(argc, argv, ind));
   EXPECT_EQ(ind, 7);
+}
+
+TEST(OptionTests, ParseLongOption_Any) {
+  ParserWrapper p;
+  std::vector<int> i;
+
+  p.add_option(i, "", 0, "int");
+
+  const char *argv[] = {"program_name", "--int", "1", "--int", "2", "--int", "3"};
+  const int argc = size(argv);
+  int ind = 1;
+
+  EXPECT_TRUE(p.parse_long_option_(argc, argv, ind));
+  EXPECT_EQ(ind, 2);
+  ind = 3;
+  EXPECT_TRUE(p.parse_long_option_(argc, argv, ind));
+  EXPECT_EQ(ind, 4);
+  ind = 5;
+  EXPECT_TRUE(p.parse_long_option_(argc, argv, ind));
+  EXPECT_EQ(ind, 6);
+
+  ASSERT_EQ(i.size(), 3);
+  EXPECT_EQ(i[0], 1);
+  EXPECT_EQ(i[1], 2);
+  EXPECT_EQ(i[2], 3);
 }

@@ -142,10 +142,70 @@ TEST(OptionTests, ParseShortOption_Any) {
 
 
 TEST(OptionTests, ParseLongOption_Single) {
+  ParserWrapper p;
+  bool b = false;
+  int i1 = 0;
+  float f = 0.0f;
+  int i2 = 0;
+  int i3 = 0;
+
+  p.add_option(b, "", 0, "bool");
+  p.add_option(i1, "", 0, "int1");
+  p.add_option(f, "", 0, "float");
+  p.add_option(i2, "", 0, "int2");
+  p.add_option(i3, "", 0, "int3");
+
+  const char *argv[] = {"program_name", "--bool", "--int1", "10", "--float=3.141", "--int2", "--int3="};
+  const int argc = size(argv);
+  int ind = 1;
+
+  EXPECT_TRUE(p.parse_long_option_(argc, argv, ind));
+  EXPECT_EQ(b, true);
+  EXPECT_EQ(ind, 1);
+
+  ind = 2;
+  EXPECT_TRUE(p.parse_long_option_(argc, argv, ind));
+  EXPECT_EQ(i1, 10);
+  EXPECT_EQ(ind, 3);
+
+  ind = 4;
+  EXPECT_TRUE(p.parse_long_option_(argc, argv, ind));
+  EXPECT_EQ(f, 3.141f);
+  EXPECT_EQ(ind, 4);
+
+  ind = 5;
+  EXPECT_FALSE(p.parse_long_option_(argc, argv, ind));
+  EXPECT_EQ(ind, 5);
+
+  ind = 6;
+  EXPECT_FALSE(p.parse_long_option_(argc, argv, ind));
+  EXPECT_EQ(ind, 6);
 }
 
 TEST(OptionTests, ParseLongOption_Multiple) {
-}
+  ParserWrapper p;
+  std::array<int, 3> ints;
+  std::array<std::string, 2> strings;
+  std::array<float, 2> floats;
 
-TEST(OptionTests, ParseLongOption_Any) {
+  p.add_option(ints, "", 0, "ints");
+  p.add_option(strings, "", 0, "strings");
+
+  const char *argv[] = {"program_name", "--ints", "1", "2", "3", "--strings", "hello", "--floats=1.0", "1.0"};
+  const int argc = size(argv);
+  int ind = 1;
+
+  EXPECT_TRUE(p.parse_long_option_(argc, argv, ind));
+  EXPECT_EQ(ints[0], 1);
+  EXPECT_EQ(ints[1], 2);
+  EXPECT_EQ(ints[2], 3);
+  EXPECT_EQ(ind, 4);
+
+  ind = 5;
+  EXPECT_FALSE(p.parse_long_option_(argc, argv, ind));
+  EXPECT_EQ(ind, 5);
+
+  ind = 7;
+  EXPECT_FALSE(p.parse_long_option_(argc, argv, ind));
+  EXPECT_EQ(ind, 7);
 }

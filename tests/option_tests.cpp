@@ -185,6 +185,7 @@ TEST(OptionTests, ParseLongOption_Multiple) {
 
   p.add_option(ints, "", 0, "ints");
   p.add_option(strings, "", 0, "strings");
+  p.add_option(floats, "", 0, "floats");
 
   const char *argv[] = {"program_name", "--ints", "1", "2", "3", "--strings", "hello", "--floats=1.0", "1.0"};
   const int argc = size(argv);

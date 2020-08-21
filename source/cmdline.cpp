@@ -61,9 +61,10 @@ bool ArgumentParser::add_option(bool &value, const char *help, char short_name, 
   return true;
 }
 
-void ArgumentParser::add_argument(std::vector<const char *> &value) {
+void ArgumentParser::add_argument(std::vector<const char *> &value, const char *name) {
   if (m_unhandled == nullptr) {
     m_unhandled = &value;
+    m_unhandled_name = name;
   }
 }
 
@@ -122,6 +123,15 @@ bool ArgumentParser::parse_args(int argc, const char **argv, bool exit_on_failur
       }
     }
   }
+
+  if (m_show_help) {
+    this->usage(argv[0]);
+    if (exit_on_failure) {
+      std::exit(0);
+    }
+    ok = false;
+  }
+
   return ok;
 }
 
@@ -196,11 +206,11 @@ bool ArgumentParser::parse_long_option(int argc, const char **argv, int &optind)
   auto print_arg_error = [&]() {
     if (opt.nargs == 1) {
       std::fprintf(stderr, "%s: option `%s' requires an argument\n",
-          argv[0], argv[optind]);
+        argv[0], argv[optind]);
     }
     else {
       std::fprintf(stderr, "%s: option `%s' requires %zu arguments\n",
-          argv[0], argv[optind], opt.nargs);
+        argv[0], argv[optind], opt.nargs);
     }
   };
 
@@ -269,11 +279,11 @@ bool ArgumentParser::parse_short_option(int argc, const char **argv, int &optind
   auto print_arg_error = [&]() {
     if (opt.nargs == 1) {
       std::fprintf(stderr, "%s: option requires an argument -- %c\n",
-          argv[0], argv[optind][1]);
+        argv[0], argv[optind][1]);
     }
     else {
       std::fprintf(stderr, "%s: option requires %zu arguments -- %c\n",
-          argv[0], opt.nargs, argv[optind][1]);
+        argv[0], opt.nargs, argv[optind][1]);
     }
   };
 
@@ -343,7 +353,8 @@ bool ArgumentParser::parse_argument(int argc, const char **argv, int &optind, st
     if (m_unhandled != nullptr) {
       m_unhandled->push_back(argv[optind]);
       return true;
-    } else {
+    }
+    else {
       std::fprintf(stderr, "%s: unrecognized argument: `%s'\n",
         argv[0], argv[optind]);
       return false;
@@ -355,11 +366,11 @@ bool ArgumentParser::parse_argument(int argc, const char **argv, int &optind, st
   auto print_arg_error = [&]() {
     if (arg.nargs == 1) {
       std::fprintf(stderr, "%s: argument `%s' requires an argument\n",
-          argv[0], arg.name.c_str());
+        argv[0], arg.name.c_str());
     }
     else {
       std::fprintf(stderr, "%s: argument `%s' requires %zu arguments\n",
-          argv[0], arg.name.c_str(), arg.nargs);
+        argv[0], arg.name.c_str(), arg.nargs);
     }
   };
 
@@ -387,7 +398,7 @@ bool ArgumentParser::parse_argument(int argc, const char **argv, int &optind, st
 }
 
 void ArgumentParser::usage(const char *program_name) {
-  std::fprintf(stderr, "%s: usage\n", program_name);
+  
 }
 
 }

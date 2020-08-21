@@ -66,6 +66,7 @@ protected:
   bool m_show_help { false }; //< output for the help option
   std::stringstream m_ss; //< used for converting arguments
   std::vector<const char *> *m_unhandled { nullptr };
+  std::string m_unhandled_name;
 
 public:
   /**
@@ -118,7 +119,7 @@ public:
    * @brief Adds an argument that recieves all unhandled positional arguments.
    * This can only be called once, subsequent calls have no effect.
    */
-  void add_argument(std::vector<const char *> &value);
+  void add_argument(std::vector<const char *> &value, const char *name);
 
 
   /**

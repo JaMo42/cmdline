@@ -109,12 +109,12 @@ public:
    * @brief Adds an argument with one value.
    */
   template<typename T>
-  void add_argument(T &value, const char *help, const char *name, bool required = true);
+  bool add_argument(T &value, const char *help, const char *name, bool required = true);
   /**
    * @brief Adds an argument with mutiple values
    */
   template<typename T, std::size_t N>
-  void add_argument(std::array<T, N> &value, const char *help, const char *name, bool required = true);
+  bool add_argument(std::array<T, N> &value, const char *help, const char *name, bool required = true);
   /**
    * @brief Adds an argument that recieves all unhandled positional arguments.
    * This can only be called once, subsequent calls have no effect.
@@ -221,7 +221,12 @@ bool ArgumentParser::add_option(std::array<T, N> &value, const char *help, char 
 }
 
 template<typename T>
-void ArgumentParser::add_argument(T &value, const char *help, const char *name, bool required) {
+bool ArgumentParser::add_argument(T &value, const char *help, const char *name, bool required) {
+  if (m_arguments.size() > 0 and required and !m_arguments.back().required) {
+    std::fprintf(stderr, "required argument `%s' cannot follow optional arguments",
+      name);
+    return false;
+  }
   m_arguments.emplace_back(
     name,
     help,
@@ -234,10 +239,16 @@ void ArgumentParser::add_argument(T &value, const char *help, const char *name, 
       return m_ss.rdbuf()->in_avail() == 0;
     }
   );
+  return true;
 }
 
 template<typename T, std::size_t N>
-void ArgumentParser::add_argument(std::array<T, N> &value, const char *help, const char *name, bool required) {
+bool ArgumentParser::add_argument(std::array<T, N> &value, const char *help, const char *name, bool required) {
+  if (m_arguments.size() > 0 and required and !m_arguments.back().required) {
+    std::fprintf(stderr, "required argument `%s' cannot follow optional arguments",
+      name);
+    return false;
+  }
   m_arguments.emplace_back(
     name,
     help,
@@ -254,6 +265,7 @@ void ArgumentParser::add_argument(std::array<T, N> &value, const char *help, con
       return true;
     }
   );
+  return true;
 }
 
 }

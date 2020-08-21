@@ -59,3 +59,35 @@ TEST(ArgumentParserTests, Abbreviations) {
   EXPECT_EQ(bint, 0);
   EXPECT_EQ(binteger, 0);
 }
+
+TEST(ArgumentParserTests, OptionalArguments) {
+  cmdline::ArgumentParser p;
+
+  int a=0, b=0, c=0;
+  p.add_argument(a, "", "a");
+  p.add_argument(b, "", "b", false);
+  p.add_argument(c, "", "c", false);
+
+  const char *argv[] = {"program_name", "1", "2"};
+  const int argc = size(argv);
+
+  EXPECT_TRUE(p.parse_args(argc, argv));
+  EXPECT_EQ(a, 1);
+  EXPECT_EQ(b, 2);
+  EXPECT_EQ(c, 0);
+}
+
+TEST(ArgumentParserTests, MissingArguments) {
+  cmdline::ArgumentParser p;
+
+  int a=0, b=0;
+  p.add_argument(a, "", "a");
+  p.add_argument(b, "", "b");
+
+  const char *argv[] = {"program_name", "1"};
+  const int argc = size(argv);
+
+  EXPECT_FALSE(p.parse_args(argc, argv, false));
+  EXPECT_EQ(a, 1);
+  EXPECT_EQ(b, 0);
+}

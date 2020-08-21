@@ -91,11 +91,11 @@ bool ArgumentParser::parse_args(int argc, const char **argv, bool exit_on_failur
   int i;
   bool ok = true;
 
-  auto print_usage_and_exit = [&]() {
+  auto print_usage_and_exit = [&](int code) {
     ok = false;
     this->usage(argv[0]);
     if (exit_on_failure) {
-      std::exit(EXIT_FAILURE);
+      std::exit(code);
     }
   };
 
@@ -108,28 +108,33 @@ bool ArgumentParser::parse_args(int argc, const char **argv, bool exit_on_failur
           continue;
         }
         if (!this->parse_long_option(argc, argv, i)) {
-          print_usage_and_exit();
+          print_usage_and_exit(1);
         }
       }
       else {
         if (!this->parse_short_option(argc, argv, i)) {
-          print_usage_and_exit();
+          print_usage_and_exit(1);
         }
       }
     }
     else {
       if (!this->parse_argument(argc, argv, i, argind)) {
-        print_usage_and_exit();
+        print_usage_and_exit(1);
       }
     }
   }
 
-  if (m_show_help) {
-    this->usage(argv[0]);
-    if (exit_on_failure) {
-      std::exit(0);
+  // Check if all required arguments where handled
+  if (argind != m_arguments.size() and m_arguments[argind].required) {
+    for (std::size_t i = argind; i < m_arguments.size() and m_arguments[i].required; ++i) {
+      std::fprintf(stderr, "%s: argument `%s' is required\n",
+        argv[0], m_arguments[i].name.c_str());
     }
-    ok = false;
+    print_usage_and_exit(1);
+  }
+
+  if (m_show_help) {
+    print_usage_and_exit(0);
   }
 
   return ok;
@@ -398,7 +403,6 @@ bool ArgumentParser::parse_argument(int argc, const char **argv, int &optind, st
 }
 
 void ArgumentParser::usage(const char *program_name) {
-  
 }
 
 }

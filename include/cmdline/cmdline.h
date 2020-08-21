@@ -119,7 +119,7 @@ public:
    * @brief Adds an argument that recieves all unhandled positional arguments.
    * This can only be called once, subsequent calls have no effect.
    */
-  void add_argument(std::vector<const char *> &value, const char *name);
+  void add_argument(std::vector<const char *> &value, const char *name = "");
 
 
   /**

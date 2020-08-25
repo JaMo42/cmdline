@@ -36,6 +36,11 @@ SOFTWARE.
 #include <iostream>
 
 namespace cmdline {
+namespace detail {
+
+std::string get_argument_name(char, const char *);
+
+}
 
 struct Option {
   char short_name;
@@ -92,17 +97,17 @@ public:
    * @brief Adds an option with one argument.
    */
   template<typename T>
-  bool add_option(T &value, const char *help, char short_name, const char *long_name, const char *value_name = "");
+  bool add_option(T &value, const char *help, char short_name, const char *long_name, const char *argument_name = nullptr);
   /**
    * @brief Adds an option with one argument, multiple occurrences will all be stored.
    */
   template<typename T>
-  bool add_option(std::vector<T> &value, const char *help, char short_name, const char *long_name, const char *value_name = "");
+  bool add_option(std::vector<T> &value, const char *help, char short_name, const char *long_name, const char *argument_name = nullptr);
   /**
    * @brief Adds an option with multiple arguments.
    */
   template<typename T, std::size_t N>
-  bool add_option(std::array<T, N> &value, const char *help, char short_name, const char *long_name, const char *value_name = "");
+  bool add_option(std::array<T, N> &value, const char *help, char short_name, const char *long_name, const char *argument_name = nullptr);
 
 
   /**
@@ -130,7 +135,7 @@ public:
   /**
    * @brief Prints the usage text.
    */
-  void usage(const char *);
+  void usage(FILE *, const char *);
 
 protected:
   static constexpr std::size_t npos = static_cast<std::size_t>(-1);
@@ -149,7 +154,7 @@ protected:
 // Implementations of template functions
 
 template<typename T>
-bool ArgumentParser::add_option(T &value, const char *help, char short_name, const char *long_name, const char *value_name) {
+bool ArgumentParser::add_option(T &value, const char *help, char short_name, const char *long_name, const char *argument_name) {
   if (!this->validate_option(short_name, long_name)) {
     return false;
   }
@@ -157,7 +162,7 @@ bool ArgumentParser::add_option(T &value, const char *help, char short_name, con
     short_name,
     long_name,
     help,
-    value_name,
+    argument_name ? argument_name : std::move(detail::get_argument_name(short_name, long_name)),
     true,
     1,
     [&](const char **arg) -> bool {
@@ -171,7 +176,7 @@ bool ArgumentParser::add_option(T &value, const char *help, char short_name, con
 }
 
 template<typename T>
-bool ArgumentParser::add_option(std::vector<T> &value, const char *help, char short_name, const char *long_name, const char *value_name) {
+bool ArgumentParser::add_option(std::vector<T> &value, const char *help, char short_name, const char *long_name, const char *argument_name) {
   if (!this->validate_option(short_name, long_name)) {
     return false;
   }
@@ -179,7 +184,7 @@ bool ArgumentParser::add_option(std::vector<T> &value, const char *help, char sh
     short_name,
     long_name,
     help,
-    value_name,
+    argument_name ? argument_name : std::move(detail::get_argument_name(short_name, long_name)),
     true,
     1,
     [&](const char **arg) -> bool {
@@ -195,7 +200,7 @@ bool ArgumentParser::add_option(std::vector<T> &value, const char *help, char sh
 }
 
 template<typename T, std::size_t N>
-bool ArgumentParser::add_option(std::array<T, N> &value, const char *help, char short_name, const char *long_name, const char *value_name) {
+bool ArgumentParser::add_option(std::array<T, N> &value, const char *help, char short_name, const char *long_name, const char *argument_name) {
   if (!this->validate_option(short_name, long_name)) {
     return false;
   }
@@ -203,7 +208,7 @@ bool ArgumentParser::add_option(std::array<T, N> &value, const char *help, char 
     short_name,
     long_name,
     help,
-    value_name,
+    argument_name ? argument_name : std::move(detail::get_argument_name(short_name, long_name)),
     true,
     N,
     [&](const char **args) -> bool {
@@ -269,3 +274,4 @@ bool ArgumentParser::add_argument(std::array<T, N> &value, const char *help, con
 }
 
 }
+

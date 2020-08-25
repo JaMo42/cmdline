@@ -24,11 +24,10 @@ SOFTWARE.
 namespace cmdline {
 namespace detail {
 
-// Gets the display name for a option argument
 std::string get_argument_name(char short_name, const char *long_name) {
   if (long_name != nullptr) {
     std::string s(long_name);
-    std::for_each(s.begin(), s.end(), ::toupper);
+    std::for_each(s.begin(), s.end(), [](char &ch) { ch = ch=='-' ? '_' : ::toupper(ch); });
     return s;
   }
   else {
@@ -88,18 +87,15 @@ bool ArgumentParser::validate_option(char short_name, const char *long_name) {
 bool ArgumentParser::parse_args(int argc, const char **argv, bool exit_on_failure) {
   std::size_t argind = 0;
   bool terminate_options = false;
-  int i;
-  bool ok = true;
 
   auto print_usage_and_exit = [&](int code) {
-    ok = false;
-    this->usage(argv[0]);
+    this->usage(stderr, argv[0]);
     if (exit_on_failure) {
       std::exit(code);
     }
   };
 
-  for (i = 1; i < argc; ++i) {
+  for (int i = 1; i < argc; ++i) {
     if (!terminate_options and argv[i][0] == '-') {
       if (argv[i][1] == '-'
           or (abbreviations and (argv[i][2] or this->option_index(argv[i][1]) == npos))) {
@@ -109,17 +105,20 @@ bool ArgumentParser::parse_args(int argc, const char **argv, bool exit_on_failur
         }
         if (!this->parse_long_option(argc, argv, i)) {
           print_usage_and_exit(1);
+          return false;
         }
       }
       else {
         if (!this->parse_short_option(argc, argv, i)) {
           print_usage_and_exit(1);
+          return false;
         }
       }
     }
     else {
       if (!this->parse_argument(argc, argv, i, argind)) {
         print_usage_and_exit(1);
+        return false;
       }
     }
   }
@@ -131,13 +130,15 @@ bool ArgumentParser::parse_args(int argc, const char **argv, bool exit_on_failur
         argv[0], m_arguments[i].name.c_str());
     }
     print_usage_and_exit(1);
+    return false;
   }
 
   if (m_show_help) {
     print_usage_and_exit(0);
+    return false;
   }
 
-  return ok;
+  return true;
 }
 
 std::size_t ArgumentParser::option_index(char short_name) {
@@ -402,7 +403,118 @@ bool ArgumentParser::parse_argument(int argc, const char **argv, int &optind, st
   return true;
 }
 
-void ArgumentParser::usage(const char *program_name) {
+namespace detail {
+void print(FILE *f, char ch) {
+  std::fputc(ch, f);
+}
+void print(FILE *f, const char *str) {
+  std::fputs(str, f);
+}
+template<typename... Args>
+void print(FILE *f, const char *fmt, const Args&... args) {
+  std::fprintf(f, fmt, args...);
+}
+}
+
+void ArgumentParser::usage(FILE *file, const char *program_name) {
+  auto print = [&file]<typename... Args>(const Args&... args) {
+    detail::print(file, args...);
+  };
+  auto print_opt_name = [&](const Option &o) {
+    if (o.short_name) {
+      print("-%c", o.short_name);
+    }
+    else {
+      print("--%s", o.long_name.c_str());
+    }
+  };
+  constexpr int NAMES_WIDTH = 24;
+
+  print("Usage: %s", program_name);
+
+  for (Option &opt : m_options) {
+    print(" [");
+    print_opt_name(opt);
+    if (opt.nargs > 0) {
+      for (std::size_t n = 0; n < opt.nargs; ++n) {
+        print(" %s", opt.argument_name.c_str());
+      }
+    }
+    print(']');
+  }
+
+  for (Argument &arg : m_arguments) {
+    print(' ');
+    if (not arg.required) {
+      print('[');
+    }
+    print(arg.name.c_str());
+    for (std::size_t n = 1; n < arg.nargs; ++n) {
+      print(" %s", arg.name.c_str());
+    }
+    if (not arg.required) {
+      print(']');
+    }
+  }
+  if (m_unhandled) {
+    print(' ');
+    if (not m_unhandled_name.empty()) {
+      print(m_unhandled_name.c_str());
+    }
+    print("...");
+  }
+  print('\n');
+
+  print("\nOptions:\n");
+  int written;
+  for (Option &opt : m_options) {
+    written = 2;
+    print("  ");
+    if (opt.short_name != 0) {
+      print("-%c", opt.short_name);
+      written += 2;
+      if (not opt.long_name.empty()) {
+        print(", ");
+        written += 2;
+      }
+    }
+    if (not opt.long_name.empty()) {
+      print("--%s", opt.long_name.c_str());
+      written += 2 + opt.long_name.length();
+    }
+
+    if (opt.nargs > 0) {
+      print(" ");
+      for (std::size_t n = 0; n < opt.nargs; ++n) {
+        print(" %s", opt.argument_name.c_str());
+      }
+      written += 1 + (1 + opt.argument_name.length()) * opt.nargs;
+    }
+
+    if (written >= NAMES_WIDTH) {
+      print('\n');
+      written = 0;
+    }
+
+    for (int i = written; i < NAMES_WIDTH; ++i) {
+      print(' ');
+    }
+    print(opt.help.c_str());
+    print('\n');
+  }
+
+  print("\nArguments:\n");
+  for (Argument &arg : m_arguments) {
+    print("  %s", arg.name.c_str());
+    if (not arg.help.empty()) {
+      for (int i = 2+arg.name.length(); i < NAMES_WIDTH; ++i) {
+        print(' ');
+      }
+      print(arg.help.c_str());
+    }
+    print('\n');
+  }
 }
 
 }
+

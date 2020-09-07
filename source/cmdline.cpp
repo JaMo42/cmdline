@@ -428,6 +428,8 @@ void ArgumentParser::usage(FILE *file, const char *program_name) {
       print("--%s", o.long_name.c_str());
     }
   };
+
+  // Width of the option and argument names column
   constexpr int NAMES_WIDTH = 24;
 
   print("Usage: %s", program_name);
